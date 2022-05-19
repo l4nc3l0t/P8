@@ -1,0 +1,17 @@
+.vscode
+.env
+*.csv
+*.ipynb
+Figures/
+Tableaux/
+fruits-*/
+*.synctex.gz
+__pycache__/
+*.aux
+*.fdb_latexmk
+*.fls
+*.log
+*.nav
+*.out
+*.snm
+*.toc
