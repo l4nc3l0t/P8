@@ -8,7 +8,7 @@
 
 3. installer les dépendances:
 
-`pip install -r requiremements.txt`
+`pip install -r requiremements.txt --no-cache-dir`
 
 4. ajouter le noyau pour jupyter :
 
