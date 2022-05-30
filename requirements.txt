@@ -3,3 +3,4 @@ jupyter
 plotly
 ipykernel
 pyspark
+opencv-python
