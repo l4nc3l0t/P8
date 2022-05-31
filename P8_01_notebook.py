@@ -13,13 +13,24 @@ from pyspark.ml.feature import VectorAssembler, PCA
 
 import cv2 as cv
 
-local = True
+local = False
 write_data = True
+
+import os
+
+os.environ[
+    'PYSPARK_SUBMIT_ARGS'] = '--packages com.amazonaws:aws-java-sdk:1.12.230,org.apache.hadoop:hadoop-aws:3.3.3 pyspark-shell'
+
 # %%
-spark = SparkSession.builder.appName('FruitsPreProc').config(
-    'spark.hadoop.fs.s3a.impl',
-    'org.apache.hadoop.fs.s3a.S3AFileSystem').getOrCreate()
+spark = SparkSession.builder.master('local').appName(
+    'FruitsPreProc').getOrCreate()
+#.config(
+#"spark.hadoop.fs.s3a.aws.credentials.provider",
+#"com.amazonaws.auth.profile.ProfileCredentialsProvider").config(
+#'spark.hadoop.fs.s3a.impl', 'org.apache.hadoop.fs.s3a.S3AFileSystem')
+
 sc = spark.sparkContext
+
 sc._jsc.hadoopConfiguration().set('fs.s3a.impl',
                                   'org.apache.hadoop.fs.s3a.S3AFileSystem')
 sc._jsc.hadoopConfiguration().set(
@@ -27,6 +38,7 @@ sc._jsc.hadoopConfiguration().set(
     "com.amazonaws.auth.profile.ProfileCredentialsProvider")
 sc._jsc.hadoopConfiguration().set("fs.s3a.endpoint",
                                   "s3.eu-west-3.amazonaws.com")
+
 spark.sparkContext._conf.getAll()
 
 # %%
