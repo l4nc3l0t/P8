@@ -4,4 +4,4 @@ jupyter
 ipykernel
 pyspark
 opencv-python
-boto3
+s3fs
