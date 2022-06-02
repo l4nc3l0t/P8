@@ -11,6 +11,8 @@ from pyspark.ml.clustering import KMeans
 from pyspark.ml import Pipeline
 from pyspark.ml.feature import VectorAssembler, PCA
 
+import io
+from PIL import Image
 import cv2 as cv
 
 local = False
@@ -42,36 +44,11 @@ sc._jsc.hadoopConfiguration().set("fs.s3a.endpoint",
 spark.sparkContext._conf.getAll()
 
 # %%
-
-s3 = boto3.resource('s3')
-
-
-def download_s3_folder(bucket_name, s3_folder, local_dir=None):
-    """
-    Download the contents of a folder directory
-    Args:
-        bucket_name: the name of the s3 bucket
-        s3_folder: the folder path in the s3 bucket
-        local_dir: a relative or absolute directory path in the local file system
-    """
-    bucket = s3.Bucket(bucket_name)
-    for obj in bucket.objects.filter(Prefix=s3_folder):
-        target = obj.key if local_dir is None \
-            else os.path.join(local_dir, os.path.relpath(obj.key, s3_folder))
-        if not os.path.exists(os.path.dirname(target)):
-            os.makedirs(os.path.dirname(target))
-        if obj.key[-1] == '/':
-            continue
-        bucket.download_file(obj.key, target)
-
-
-# %%
-download_s3_folder('stockp8oc', 'fruits-360')
-# %%
 if local is True:
     path = './fruits-360_dataset/fruits-360/Training/'
 else:
-    path = './fruits-360/Training/'
+    path = 's3a://stockp8oc/fruits-360/LightTrain/'
+    # 's3a://stockp8oc/fruits-360/Training/'
 
 
 def load_img_data(path=path):
@@ -82,15 +59,18 @@ def load_img_data(path=path):
                     .select('path', 'content')
     ImgData = ImgData.withColumn('label',
                                  F.element_at(F.split(F.col('path'), '/'), -2))
-    ImgData = ImgData.withColumn('TruePath',
-                                 F.element_at(F.split(F.col('path'), ':'), 2))
+    if local is True:
+        ImgData = ImgData.withColumn(
+            'TruePath', F.element_at(F.split(F.col('path'), ':'), 2))
+    else:
+        ImgData = ImgData.withColumn('TruePath', F.col('path'))
+
     ImgData = ImgData.withColumn(
         'imgName',
         F.concat('label', F.lit('_'),
                  F.element_at(F.split(F.col('path'), '/'), -1)))
     ImgData = ImgData.drop('path')
-    ImgData.show(3)
-    return ImgData  #.sample(.01)
+    return ImgData
 
 
 # %%
@@ -98,10 +78,10 @@ ImgData = load_img_data()
 
 
 # %%
-def get_desc(img):
-    image = cv.imread(img)
+def get_desc(content):
+    img = np.array(Image.open(io.BytesIO(content)))
     orb = cv.ORB_create(nfeatures=100)
-    keypoints_orb, desc = orb.detectAndCompute(image, None)
+    keypoints_orb, desc = orb.detectAndCompute(img, None)
     if desc is None:
         desc = [np.array(32 * [0]).astype(np.float64).tolist()]
     else:
@@ -114,8 +94,7 @@ udf_image = F.udf(
     get_desc,
     ArrayType(ArrayType(FloatType(), containsNull=False), containsNull=False))
 
-ImgDesc = ImgData.drop('content').withColumn("descriptors",
-                                             F.explode(udf_image("TruePath")))
+ImgDesc = ImgData.withColumn("descriptors", F.explode(udf_image("content")))
 
 # %%
 kmean = KMeans(k=1000, featuresCol='descriptors', seed=0)
@@ -145,5 +124,8 @@ pcaDataDFClean = pcaDataDF.join(
     pd.DataFrame(
         pcaDataDF['pca_features'].tolist())).drop(columns='pca_features')
 if write_data is True:
-    pcaDataDFClean.to_csv('./featuresPCA.csv', index=False)
+    if local is True:
+        pcaDataDFClean.to_csv('./featuresPCA.csv', index=False)
+    else:
+        pcaDataDFClean.to_csv('s3://stockp8oc/featuresPCA.csv', index=False)
 # %%
