@@ -5,3 +5,4 @@ ipykernel
 pyspark
 opencv-python
 s3fs
+pillow
