@@ -2,8 +2,6 @@
 import numpy as np
 import pandas as pd
 
-import boto3
-
 from pyspark import SparkContext, SparkConf
 from pyspark.sql import SparkSession, functions as F
 from pyspark.sql.types import ArrayType, FloatType, IntegerType
