@@ -1,0 +1,88 @@
+\documentclass[8pt,aspectratio=169,hyperref={unicode=true}]{beamer}
+
+\usefonttheme{serif}
+\usepackage{fontspec}
+	\setmainfont{TeX Gyre Heros}
+\usepackage{unicode-math}
+\usepackage{lualatex-math}
+	\setmathfont{TeX Gyre Termes Math}
+\usepackage{polyglossia}
+\setdefaultlanguage[frenchpart=false]{french}
+\setotherlanguage{english}
+%\usepackage{microtype}
+\usepackage[locale = FR,
+            separate-uncertainty,
+            multi-part-units = single,
+            range-units = single]{siunitx}
+	\DeclareSIUnit\an{an}
+  \DeclareSIUnit{\octet}{o}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{array}
+\usepackage{graphicx}
+\graphicspath{{./Figures/}}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{multirow}
+\usepackage{multicol}
+    \newcolumntype{L}{>{\raggedright\arraybackslash}X}
+    \newcolumntype{R}{>{\raggedleft\arraybackslash}X}
+\usepackage{makecell}
+\setcellgapes{5pt}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{graphs, graphdrawing, arrows.meta} \usegdlibrary{layered, trees}
+\usetikzlibrary{overlay-beamer-styles}
+\usepackage{subcaption}
+\usepackage[]{animate}
+\usepackage{float}
+\usepackage{csquotes}
+\usepackage{minted}
+
+\usetheme[secheader]{Boadilla}
+\usecolortheme{seagull}
+\setbeamertemplate{enumerate items}[default]
+\setbeamertemplate{itemize items}{-}
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{bibliography item}{}
+\setbeamerfont{framesubtitle}{size=\large}
+\setbeamertemplate{section in toc}[sections numbered]
+%\setbeamertemplate{subsection in toc}[subsections numbered]
+
+\title[Déployez un modèle dans le cloud]{Projet 8 : Déployez un modèle dans le cloud}
+\author[Lancelot \textsc{Leclercq}]{Lancelot \textsc{Leclercq}} 
+\institute[]{}
+\date[]{\small{10 juin 2022}}
+
+\AtBeginSection[]{
+  \begin{frame}
+  \vfill
+  \centering
+    \usebeamerfont{title}\insertsectionhead\par%
+  \vfill
+  \end{frame}
+}
+
+\begin{document}
+\setbeamercolor{background canvas}{bg=gray!20}
+\begin{frame}[plain]
+    \titlepage
+\end{frame}
+
+\begin{frame}{Sommaire}
+    \Large
+    \begin{columns}
+        \begin{column}{.7\textwidth}
+            \tableofcontents[hideallsubsections]
+        \end{column}
+    \end{columns}
+\end{frame}
+
+\section{Introduction}
+\subsection{Problématique}
+\begin{frame}{\insertsubsection}
+
+\end{frame}
+
+\end{document}
