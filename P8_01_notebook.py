@@ -45,8 +45,8 @@ spark.sparkContext._conf.getAll()
 if local is True:
     path = './fruits-360_dataset/fruits-360/Training/'
 else:
-    path = 's3a://stockp8oc/fruits-360/LightTrain/'
-    # 's3a://stockp8oc/fruits-360/Training/'
+    #path = 's3a://stockp8oc/fruits-360/LightTrain/'
+    path = 's3a://stockp8oc/fruits-360/Training/'
 
 
 def load_img_data(path=path):
@@ -77,9 +77,17 @@ ImgData = load_img_data()
 
 # %%
 def get_desc(content):
-    img = np.array(Image.open(io.BytesIO(content)))
-    orb = cv.ORB_create(nfeatures=100)
-    keypoints_orb, desc = orb.detectAndCompute(img, None)
+    try:
+        img = np.array(Image.open(io.BytesIO(content)))
+    except:
+        print(content)
+        img = None
+        return img
+    if img is None:
+        desc = None
+    else:
+        orb = cv.ORB_create(nfeatures=100)
+        keypoints_orb, desc = orb.detectAndCompute(img, None)
     if desc is None:
         desc = [np.array(32 * [0]).astype(np.float64).tolist()]
     else:
@@ -93,7 +101,7 @@ udf_image = F.udf(
     ArrayType(ArrayType(FloatType(), containsNull=False), containsNull=False))
 
 ImgDesc = ImgData.withColumn("descriptors", F.explode(udf_image("content")))
-
+ImgDesc.show(3)
 # %%
 kmean = KMeans(k=1000, featuresCol='descriptors', seed=0)
 model = kmean.fit(ImgDesc)
