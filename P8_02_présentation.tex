@@ -67,22 +67,83 @@
 \begin{document}
 \setbeamercolor{background canvas}{bg=gray!20}
 \begin{frame}[plain]
-    \titlepage
+  \titlepage
 \end{frame}
 
 \begin{frame}{Sommaire}
-    \Large
-    \begin{columns}
-        \begin{column}{.7\textwidth}
-            \tableofcontents[hideallsubsections]
-        \end{column}
-    \end{columns}
+  \Large
+  \begin{columns}
+    \begin{column}{.7\textwidth}
+      \tableofcontents[hideallsubsections]
+    \end{column}
+  \end{columns}
 \end{frame}
 
 \section{Introduction}
 \subsection{Problématique}
 \begin{frame}{\insertsubsection}
+  \begin{columns}
+    \begin{column}{.6\textwidth}
+      \begin{itemize}
+        \item Préservation de la biodiversité des fruits
+              \begin{itemize}
+                \item traitements spécifiques pour chaque espèce de fruits par des robots cueilleurs intelligents
+              \end{itemize}
+        \item[]
+        \item 1ère étape développer une application mobile
+              \begin{itemize}
+                \item Permettre à l'utilisateurs d'obtenir des informations sur un fruit à partir d'une photo
+                \item[]
+                \item Sensibiliser le grand public à la biodiversité des fruits
+                \item[]
+                \item Mettre en place une première version du moteur de classification des images de fruits
+                \item[]
+                \item Construire une première version de l'architecture Big Data
+              \end{itemize}
+      \end{itemize}
 
+    \end{column}
+    \begin{column}{.4\textwidth}
+      \includegraphics[width=\textwidth]{./Logo projet big data.png}
+    \end{column}
+  \end{columns}
 \end{frame}
 
+\subsection{Données}
+\begin{frame}{\insertsubsection}
+  \begin{columns}
+    \begin{column}{.6\textwidth}
+      \begin{itemize}
+        \item Utilisation du jeu de données Kaggle : \url{https://www.kaggle.com/datasets/moltean/fruits}
+        \item[]
+        \item Nombre total d'images : 90483
+        \item[]
+        \item Taille du jeu d'entrainement : 67692 images
+        \item[]
+        \item Taille du jeu de test: 22688 images
+        \item[]
+        \item  Nombre de fruits : 131
+      \end{itemize}
+    \end{column}
+    \begin{column}{.4\textwidth}
+      \begin{itemize}
+        \item Exemple d'image de fruit :
+        \item[]
+      \end{itemize}
+      \includegraphics[width=.8\textwidth]{./fruits-360_dataset/fruits-360/Training/Strawberry/0_100.jpg}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\section{Architecture Big Data}
+\subsection{Spark}
+\begin{frame}{\insertsubsection}
+  \begin{columns}
+    \begin{column}{.6\textwidth}
+      \begin{itemize}
+        \item
+      \end{itemize}
+    \end{column}
+  \end{columns}
+\end{frame}
 \end{document}
