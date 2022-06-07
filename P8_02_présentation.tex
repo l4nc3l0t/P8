@@ -92,7 +92,7 @@
         \item[]
         \item 1ère étape développer une application mobile
               \begin{itemize}
-                \item Permettre à l'utilisateurs d'obtenir des informations sur un fruit à partir d'une photo
+                \item Permettre à l'utilisateur d'obtenir des informations sur un fruit à partir d'une photo
                 \item[]
                 \item Sensibiliser le grand public à la biodiversité des fruits
                 \item[]
@@ -120,7 +120,7 @@
         \item[]
         \item Taille du jeu d'entrainement : 67692 images
         \item[]
-        \item Taille du jeu de test: 22688 images
+        \item Taille du jeu de test : 22688 images
         \item[]
         \item  Nombre de fruits : 131
       \end{itemize}
@@ -136,14 +136,121 @@
 \end{frame}
 
 \section{Architecture Big Data}
+\subsection{AWS}
+\begin{frame}{\insertsubsection}
+  \begin{columns}
+    \begin{column}{.6\textwidth}
+      \begin{itemize}
+        \item Utilisation d'une machine EC2 hébergée par Amazon Web Services
+        \item[]
+        \item Utilisation de Debian
+        \item[]
+        \item Installation de java, git
+      \end{itemize}
+    \end{column}
+    \begin{column}{.4\textwidth}
+      \includegraphics[width=.8\textwidth]{./512px-Amazon_Web_Services_Logo.svg.png}
+    \end{column}
+  \end{columns}
+\end{frame}
+
 \subsection{Spark}
 \begin{frame}{\insertsubsection}
   \begin{columns}
     \begin{column}{.6\textwidth}
       \begin{itemize}
-        \item
+        \item Parallélisation des calculs
+              \begin{itemize}
+                \item Utilisation de plusieurs machines
+                \item Distribution des calculs
+                \item Budget
+              \end{itemize}
+        \item[]
+        \item Utilisation de PySpark
+              \begin{itemize}
+                \item Interface Spark en python
+              \end{itemize}
       \end{itemize}
+    \end{column}
+    \begin{column}{.4\textwidth}
+      \includegraphics[width=\textwidth]{./spark.pdf}
+    \end{column}
+  \end{columns}
+  \vfill
+  \begin{center}
+    \tikz [rounded corners, every node/.style={anchor=west}, level sep = 5mm, >={Stealth}]
+    \graph [layered layout, grow=right, nodes={draw, font=\footnotesize}, head anchor=west, tail anchor=east,
+    edges=rounded corners, sibling distance=5mm]{
+    Images -> Importation ->  "Détection (1000)" -> "Clusterisation (KMeans)" -- "PCA (100)" -> "création fichier .csv",
+    "Détection des descripteurs (OpenCV)" [draw] // {"Détection (1000)", "Clusterisation (KMeans)"},
+    "Réduction de dimension"  [draw]  // {"PCA (100)", "création fichier .csv"},
+    };
+  \end{center}
+\end{frame}
+
+\subsection{PySpark}
+\begin{frame}[fragile]{\insertsubsection}
+  \begin{itemize}
+    \item Utilisation de PySpark une interface Spark en python
+  \end{itemize}
+  \begin{columns}
+    \begin{column}{.25\textwidth}
+      \begin{itemize}
+        \item Importation des images au format binaire :
+      \end{itemize}
+    \end{column}
+    \begin{column}{.75\textwidth}
+      \begin{minted}{python}
+ImgData = spark.read.format('binaryFile') \
+                  .option('pathGlobFilter', '*.jpg') \
+                  .option('recursiveFileLookup', 'true') \
+                  .load(path) \
+                  .select('path', 'content')   
+      \end{minted}
+    \end{column}
+  \end{columns}
+  \vspace{3px}
+  \hrule
+  \begin{columns}
+    \begin{column}{.25\textwidth}
+      \begin{itemize}
+        \item Création d'une colonne avec les descripteurs détectés pas OpenCV :
+      \end{itemize}
+    \end{column}
+    \begin{column}{.75\textwidth}
+      \begin{minted}{python}
+udf_image = F.udf(
+    get_desc,
+    ArrayType(ArrayType(FloatType(), containsNull=False), containsNull=False))
+
+ImgDesc = ImgData.withColumn("descriptors", F.explode(udf_image("content")))  
+      \end{minted}
+    \end{column}
+  \end{columns}
+  \vspace{3px}
+  \hrule
+  \begin{columns}
+    \begin{column}{.25\textwidth}
+      \begin{itemize}
+        \item Réduction de dimension par PCA :
+      \end{itemize}
+    \end{column}
+    \begin{column}{.75\textwidth}
+      \begin{minted}{python}
+VA = VectorAssembler(inputCols=BoVW.drop('label').columns,
+                     outputCol='features')
+pca = PCA(k=100, inputCol='features', outputCol='pca_features')
+pipe = Pipeline(stages=[VA, pca])
+
+pipePCA = pipe.fit(BoVW)
+
+pcaData = pipePCA.transform(BoVW)
+pcaDataDF = pcaData.select(['label', 'pca_features']).toPandas()
+      \end{minted}
     \end{column}
   \end{columns}
 \end{frame}
+
 \end{document}
+
+
