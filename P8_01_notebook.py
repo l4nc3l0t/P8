@@ -13,7 +13,7 @@ import io
 from PIL import Image
 import cv2 as cv
 
-local = False
+local = True
 write_data = True
 
 import os
@@ -49,30 +49,24 @@ else:
     path = 's3a://stockp8oc/fruits-360/Training/'
 
 
-def load_img_data(path=path):
-    ImgData = spark.read.format('binaryFile') \
-                    .option('pathGlobFilter', '*.jpg') \
-                    .option('recursiveFileLookup', 'true') \
-                    .load(path) \
-                    .select('path', 'content')
-    ImgData = ImgData.withColumn('label',
-                                 F.element_at(F.split(F.col('path'), '/'), -2))
-    if local is True:
-        ImgData = ImgData.withColumn(
-            'TruePath', F.element_at(F.split(F.col('path'), ':'), 2))
-    else:
-        ImgData = ImgData.withColumn('TruePath', F.col('path'))
+ImgData = spark.read.format('binaryFile') \
+                .option('pathGlobFilter', '*.jpg') \
+                .option('recursiveFileLookup', 'true') \
+                .load(path) \
+                .select('path', 'content')
+ImgData = ImgData.withColumn('label',
+                             F.element_at(F.split(F.col('path'), '/'), -2))
+if local is True:
+    ImgData = ImgData.withColumn('TruePath',
+                                 F.element_at(F.split(F.col('path'), ':'), 2))
+else:
+    ImgData = ImgData.withColumn('TruePath', F.col('path'))
 
-    ImgData = ImgData.withColumn(
-        'imgName',
-        F.concat('label', F.lit('_'),
-                 F.element_at(F.split(F.col('path'), '/'), -1)))
-    ImgData = ImgData.drop('path')
-    return ImgData
-
-
-# %%
-ImgData = load_img_data()
+ImgData = ImgData.withColumn(
+    'imgName',
+    F.concat('label', F.lit('_'), F.element_at(F.split(F.col('path'), '/'),
+                                               -1)))
+ImgData = ImgData.drop('path')
 
 
 # %%
