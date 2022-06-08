@@ -104,6 +104,7 @@
 
     \end{column}
     \begin{column}{.4\textwidth}
+      \center
       \includegraphics[width=\textwidth]{./Logo projet big data.png}
     \end{column}
   \end{columns}
@@ -130,30 +131,35 @@
         \item Exemple d'image de fruit :
         \item[]
       \end{itemize}
+      \center
       \includegraphics[width=.8\textwidth]{./fruits-360_dataset/fruits-360/Training/Strawberry/0_100.jpg}
     \end{column}
   \end{columns}
 \end{frame}
 
-\section{Architecture Big Data}
-\subsection{AWS}
-\begin{frame}{\insertsubsection}
+\section{Services AWS}
+\begin{frame}{\insertsection}
   \begin{columns}
     \begin{column}{.6\textwidth}
       \begin{itemize}
         \item Utilisation d'une machine EC2 hébergée par Amazon Web Services
+              \begin{itemize}
+                \item Utilisation de Debian
+                \item[]
+                \item Installation de java, git
+              \end{itemize}
         \item[]
-        \item Utilisation de Debian
-        \item[]
-        \item Installation de java, git
+        \item Utilisation de S3 comme espace de stockage pour la base de données d'images
       \end{itemize}
     \end{column}
     \begin{column}{.4\textwidth}
+      \center
       \includegraphics[width=.8\textwidth]{./512px-Amazon_Web_Services_Logo.svg.png}
     \end{column}
   \end{columns}
 \end{frame}
 
+\section{Chaine de traitement}
 \subsection{Spark}
 \begin{frame}{\insertsubsection}
   \begin{columns}
@@ -162,14 +168,11 @@
         \item Parallélisation des calculs
               \begin{itemize}
                 \item Utilisation de plusieurs machines
+                \item[]
                 \item Distribution des calculs
-                \item Budget
               \end{itemize}
         \item[]
-        \item Utilisation de PySpark
-              \begin{itemize}
-                \item Interface Spark en python
-              \end{itemize}
+        \item Coût d'utilisation des machines à surveiller
       \end{itemize}
     \end{column}
     \begin{column}{.4\textwidth}
@@ -178,12 +181,12 @@
   \end{columns}
   \vfill
   \begin{center}
-    \tikz [rounded corners, every node/.style={anchor=west}, level sep = 5mm, >={Stealth}]
+    \tikz [rounded corners, every node/.style={anchor=west}, level sep = 4mm, >={Stealth}]
     \graph [layered layout, grow=right, nodes={draw, font=\footnotesize}, head anchor=west, tail anchor=east,
     edges=rounded corners, sibling distance=5mm]{
-    Images -> Importation ->  "Détection (1000)" -> "Clusterisation (KMeans)" -- "PCA (100)" -> "création fichier .csv",
-    "Détection des descripteurs (OpenCV)" [draw] // {"Détection (1000)", "Clusterisation (KMeans)"},
-    "Réduction de dimension"  [draw]  // {"PCA (100)", "création fichier .csv"},
+    Importation images ->  Détection -> "Clusterisation (1000 groupes de descripteurs)" -> "PCA (conservation de 100 composantes)" -> "création fichier .csv",
+    "Détection des descripteurs (OpenCV)" [draw] // {Détection, "Clusterisation (1000 groupes de descripteurs)"},
+    "Réduction de dimension"  [draw]  // {"PCA (conservation de 100 composantes)"},
     };
   \end{center}
 \end{frame}
@@ -251,6 +254,19 @@ pcaDataDF = pcaData.select(['label', 'pca_features']).toPandas()
   \end{columns}
 \end{frame}
 
+\section{Axes d'amélioration}
+\begin{frame}{\insertsection}
+  \begin{itemize}
+    \item KMeans instable, difficile à débugger :
+    \item[$\Rightarrow$] Essayer d'autres alternatives comme dask
+    \item[]
+    \item Utilisation d'un EMR permettant d'avoir les calculs réalisés par plusieurs machines
+    \item[]
+    \item Ajout d'un modèle de classification afin de classer les fruits
+    \item[]
+    \item Affiner les catégories avec des maturités différentes afin de cueillir les fruits au meilleur moment 
+  \end{itemize}
+\end{frame}
 \end{document}
 
 
