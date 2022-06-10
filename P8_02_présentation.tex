@@ -39,6 +39,7 @@
 \usepackage{float}
 \usepackage{csquotes}
 \usepackage{minted}
+\usepackage{xurl}
 
 \usetheme[secheader]{Boadilla}
 \usecolortheme{seagull}
@@ -146,6 +147,8 @@
               \begin{itemize}
                 \item Utilisation de Debian
                 \item[]
+                \item Connexion par SSH
+                \item[]
                 \item Installation de java, git
               \end{itemize}
         \item[]
@@ -157,6 +160,80 @@
       \includegraphics[width=.8\textwidth]{./512px-Amazon_Web_Services_Logo.svg.png}
     \end{column}
   \end{columns}
+\end{frame}
+
+\begin{frame}{\insertsection}
+  \begin{columns}
+    \begin{column}{.5\textwidth}
+      \begin{itemize}
+        \item Essais avec t2.micro
+              \begin{itemize}
+                \item 1 CPU
+                \item \SI{1}{\giga\byte} de mémoire RAM
+                \item \SI{10}{\giga\octet} de mémoire disque
+                \item Connexion réseau lente
+              \end{itemize}
+        \item[]
+        \item Utilisation d'un jeu d'entrainement très léger : 2 types de fruits
+        \item[]
+        \item Offre gratuite
+        \item[]
+        \item Coût très faible, mais peu de ressources de calculs
+      \end{itemize}
+    \end{column}
+    \begin{column}{.5\textwidth}
+      \begin{itemize}
+        \item Essais avec t3.2xlarge
+              \begin{itemize}
+                \item 8 CPU
+                \item \SI{32}{\giga\byte} de mémoire RAM
+                \item \SI{10}{\giga\octet} de mémoire disque
+                \item Connexion réseau jusqu'à \SI{5}{\giga\bit}
+              \end{itemize}
+        \item[]
+        \item Sample d'un dixième de la base originale $\simeq$ 60000 image soit environ 6000 images
+        \item[]
+        \item \SI{0.3776}{\$} par heure
+        \item[]
+        \item Coût plus important, mais supporte mieux la charge de calculs
+      \end{itemize}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\subsection{Configuration de l'utilisation des services Amazon}
+\begin{frame}[fragile]{\insertsection}{\insertsubsection}
+  \begin{itemize}
+    \item Téléchargement des packages permettant de communiquer avec le stockage S3
+  \end{itemize}
+  \begin{minted}{python}
+os.environ[
+    'PYSPARK_SUBMIT_ARGS'] = '--packages com.amazonaws:aws-java-sdk:1.12.230, \
+                                org.apache.hadoop:hadoop-aws:3.3.1 pyspark-shell'
+  \end{minted}
+
+  \vfill
+  \hrule
+
+  \begin{itemize}
+    \item Configuration de hadoop pour gérer la connexion au stockage sur S3
+    \begin{itemize}
+      \item Utilisation d'un fichier \emph{credentials} dans le dossier ~/.aws/ afin d'avoir les clés de connexion facilement accessibles
+    \end{itemize}
+  \end{itemize}
+  \begin{minted}{python}
+  spark = SparkSession.builder.master('local').appName(
+      'FruitsPreProc').getOrCreate()
+  sc = spark.sparkContext
+  sc._jsc.hadoopConfiguration().set('fs.s3a.impl',
+                                    'org.apache.hadoop.fs.s3a.S3AFileSystem')
+  sc._jsc.hadoopConfiguration().set(
+      "fs.s3a.aws.credentials.provider",
+      "com.amazonaws.auth.profile.ProfileCredentialsProvider")
+  sc._jsc.hadoopConfiguration().set("fs.s3a.endpoint",
+                                    "s3.eu-west-3.amazonaws.com")
+  spark.sparkContext._conf.getAll()
+    \end{minted}
 \end{frame}
 
 \section{Chaine de traitement}
@@ -173,6 +250,8 @@
               \end{itemize}
         \item[]
         \item Coût d'utilisation des machines à surveiller
+        \item[]
+        \item Utilisation de PySpark une interface Spark en python
       \end{itemize}
     \end{column}
     \begin{column}{.4\textwidth}
@@ -192,10 +271,8 @@
 \end{frame}
 
 \subsection{PySpark}
-\begin{frame}[fragile]{\insertsubsection}
-  \begin{itemize}
-    \item Utilisation de PySpark une interface Spark en python
-  \end{itemize}
+\subsubsection{Importation des données}
+\begin{frame}[fragile]{\insertsubsection : \insertsubsubsection}
   \begin{columns}
     \begin{column}{.25\textwidth}
       \begin{itemize}
@@ -212,6 +289,84 @@ ImgData = spark.read.format('binaryFile') \
       \end{minted}
     \end{column}
   \end{columns}
+
+  \vfill
+  \hrule
+
+  \begin{columns}
+    \begin{column}{.25\textwidth}
+      \begin{itemize}
+        \item Récupération d'un label (nom du fruit et espèce) à partir du chemin d'accès au fichier image :
+      \end{itemize}
+    \end{column}
+    \begin{column}{.75\textwidth}
+      \begin{minted}{python}
+ImgData = ImgData.withColumn('label',
+                             F.element_at(F.split(F.col('path'), '/'), -2))
+      \end{minted}
+    \end{column}
+  \end{columns}
+
+  \vfill
+  \hrule
+
+  \begin{columns}
+    \begin{column}{.25\textwidth}
+      \begin{itemize}
+        \item Création d'un nom d'image du label et du nom de l'image :
+        \item Ex :
+              \begin{itemize}
+                \item image : 0\_100.jpg
+                \item label : Apricot
+                \item nom : Apricot\_0\_100.jpg
+              \end{itemize}
+      \end{itemize}
+    \end{column}
+    \begin{column}{.75\textwidth}
+      \begin{minted}{python}
+ImgData = ImgData.withColumn(
+    'imgName',
+    F.concat('label', F.lit('_'), F.element_at(F.split(F.col('path'), '/'),
+                                               -1)))
+      \end{minted}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\subsubsection{Détection des descripteurs}
+\begin{frame}[fragile]{\insertsubsection : \insertsubsubsection}
+  \begin{columns}
+    \begin{column}{.3\textwidth}
+      \begin{itemize}
+        \item Fonction permettant de détecter les descripteurs avec OpenCV :
+        \item[]
+        \item Utilisation des données binaires des images grâce à io.BytesIO
+        \item[]
+        \item Inspiré de \url{https://stackoverflow.com/questions/60192589/problem-with-pyspark-udf-to-get-descriptors-with-opencv-problem}
+      \end{itemize}
+    \end{column}
+    \begin{column}{.7\textwidth}
+      \begin{minted}{python}
+def get_desc(content):
+    try:
+        img = np.array(Image.open(io.BytesIO(content)))
+    except:
+        print(content)
+        img = None
+        return img
+    if img is None:
+        desc = None
+    else:
+        orb = cv.ORB_create(nfeatures=100)
+        keypoints_orb, desc = orb.detectAndCompute(img, None)
+    if desc is None:
+        desc = [np.array(32 * [0]).astype(np.float64).tolist()]
+    else:
+        desc = desc.astype(np.float64).tolist()
+    return desc
+      \end{minted}
+    \end{column}
+  \end{columns}
   \vspace{3px}
   \hrule
   \begin{columns}
@@ -225,13 +380,54 @@ ImgData = spark.read.format('binaryFile') \
 udf_image = F.udf(
     get_desc,
     ArrayType(ArrayType(FloatType(), containsNull=False), containsNull=False))
-
 ImgDesc = ImgData.withColumn("descriptors", F.explode(udf_image("content")))  
       \end{minted}
     \end{column}
   \end{columns}
-  \vspace{3px}
+\end{frame}
+
+\subsubsection{Création d'un \emph{bag of visual words}}
+\begin{frame}[fragile]{\insertsubsection : \insertsubsubsection}
+  \begin{columns}
+    \begin{column}{.3\textwidth}
+      \begin{itemize}
+        \item Utilisation des fonction de machine learning de pyspark : KMeans
+              \begin{itemize}
+                \item Création de groupes de descripteurs
+              \end{itemize}
+      \end{itemize}
+    \end{column}
+    \begin{column}{.7\textwidth}
+      \begin{minted}{python}
+kmean = KMeans(k=1000, featuresCol='descriptors', seed=0)
+model = kmean.fit(ImgDesc)
+
+Pred = model.transform(ImgDesc)
+      \end{minted}
+    \end{column}
+  \end{columns}
+
+  \vfill
   \hrule
+
+  \begin{columns}
+    \begin{column}{.25\textwidth}
+      \begin{itemize}
+        \item Utilisation de la fonction groupBy pour compter le nombre d'occurrences de chaques groupes de descripteurs
+      \end{itemize}
+    \end{column}
+    \begin{column}{.75\textwidth}
+      \begin{minted}{python}
+ImgPred = Pred.groupBy('label', 'prediction').count()
+
+BoVW = ImgPred.groupBy('label').pivot('prediction').sum('count').fillna(0)
+      \end{minted}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\subsubsection{Réduction de dimension}
+\begin{frame}[fragile]{\insertsubsection : \insertsubsubsection}
   \begin{columns}
     \begin{column}{.25\textwidth}
       \begin{itemize}
@@ -264,7 +460,7 @@ pcaDataDF = pcaData.select(['label', 'pca_features']).toPandas()
     \item[]
     \item Ajout d'un modèle de classification afin de classer les fruits
     \item[]
-    \item Affiner les catégories avec des maturités différentes afin de cueillir les fruits au meilleur moment 
+    \item Affiner les catégories avec des maturités différentes afin de cueillir les fruits au meilleur moment
   \end{itemize}
 \end{frame}
 \end{document}
