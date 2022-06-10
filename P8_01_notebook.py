@@ -13,13 +13,14 @@ import io
 from PIL import Image
 import cv2 as cv
 
-local = True
+local = False
 write_data = True
 
 import os
 
 os.environ[
-    'PYSPARK_SUBMIT_ARGS'] = '--packages com.amazonaws:aws-java-sdk:1.12.230,org.apache.hadoop:hadoop-aws:3.3.1 pyspark-shell'
+    'PYSPARK_SUBMIT_ARGS'] = '--packages com.amazonaws:aws-java-sdk:1.12.230, \
+                                org.apache.hadoop:hadoop-aws:3.3.1 pyspark-shell'
 
 # %%
 spark = SparkSession.builder.master('local').appName(
@@ -54,19 +55,14 @@ ImgData = spark.read.format('binaryFile') \
                 .option('recursiveFileLookup', 'true') \
                 .load(path) \
                 .select('path', 'content')
+
 ImgData = ImgData.withColumn('label',
                              F.element_at(F.split(F.col('path'), '/'), -2))
-if local is True:
-    ImgData = ImgData.withColumn('TruePath',
-                                 F.element_at(F.split(F.col('path'), ':'), 2))
-else:
-    ImgData = ImgData.withColumn('TruePath', F.col('path'))
-
 ImgData = ImgData.withColumn(
     'imgName',
     F.concat('label', F.lit('_'), F.element_at(F.split(F.col('path'), '/'),
                                                -1)))
-ImgData = ImgData.drop('path')
+ImgData = ImgData.drop('path').sample(.1)
 
 
 # %%
