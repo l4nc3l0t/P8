@@ -138,105 +138,7 @@
   \end{columns}
 \end{frame}
 
-\section{Services AWS}
-\begin{frame}{\insertsection}
-  \begin{columns}
-    \begin{column}{.6\textwidth}
-      \begin{itemize}
-        \item Utilisation d'une machine EC2 hébergée par Amazon Web Services
-              \begin{itemize}
-                \item Utilisation de Debian
-                \item[]
-                \item Connexion par SSH
-                \item[]
-                \item Installation de java, git
-              \end{itemize}
-        \item[]
-        \item Utilisation de S3 comme espace de stockage pour la base de données d'images
-      \end{itemize}
-    \end{column}
-    \begin{column}{.4\textwidth}
-      \center
-      \includegraphics[width=.8\textwidth]{./512px-Amazon_Web_Services_Logo.svg.png}
-    \end{column}
-  \end{columns}
-\end{frame}
-
-\begin{frame}{\insertsection}
-  \begin{columns}
-    \begin{column}{.5\textwidth}
-      \begin{itemize}
-        \item Essais avec t2.micro
-              \begin{itemize}
-                \item 1 CPU
-                \item \SI{1}{\giga\byte} de mémoire RAM
-                \item \SI{10}{\giga\octet} de mémoire disque
-                \item Connexion réseau lente
-              \end{itemize}
-        \item[]
-        \item Utilisation d'un jeu d'entrainement très léger : 2 types de fruits
-        \item[]
-        \item Offre gratuite
-        \item[]
-        \item Coût très faible, mais peu de ressources de calculs
-      \end{itemize}
-    \end{column}
-    \begin{column}{.5\textwidth}
-      \begin{itemize}
-        \item Essais avec t3.2xlarge
-              \begin{itemize}
-                \item 8 CPU
-                \item \SI{32}{\giga\byte} de mémoire RAM
-                \item \SI{10}{\giga\octet} de mémoire disque
-                \item Connexion réseau jusqu'à \SI{5}{\giga\bit}
-              \end{itemize}
-        \item[]
-        \item Sample d'un dixième de la base originale $\simeq$ 60000 image soit environ 6000 images
-        \item[]
-        \item \SI{0.3776}{\$} par heure
-        \item[]
-        \item Coût plus important, mais supporte mieux la charge de calculs
-      \end{itemize}
-    \end{column}
-  \end{columns}
-\end{frame}
-
-\subsection{Configuration de l'utilisation des services Amazon}
-\begin{frame}[fragile]{\insertsection}{\insertsubsection}
-  \begin{itemize}
-    \item Téléchargement des packages permettant de communiquer avec le stockage S3
-  \end{itemize}
-  \begin{minted}{python}
-os.environ[
-    'PYSPARK_SUBMIT_ARGS'] = '--packages com.amazonaws:aws-java-sdk:1.12.230, \
-                                org.apache.hadoop:hadoop-aws:3.3.1 pyspark-shell'
-  \end{minted}
-
-  \vfill
-  \hrule
-
-  \begin{itemize}
-    \item Configuration de hadoop pour gérer la connexion au stockage sur S3
-    \begin{itemize}
-      \item Utilisation d'un fichier \emph{credentials} dans le dossier ~/.aws/ afin d'avoir les clés de connexion facilement accessibles
-    \end{itemize}
-  \end{itemize}
-  \begin{minted}{python}
-  spark = SparkSession.builder.master('local').appName(
-      'FruitsPreProc').getOrCreate()
-  sc = spark.sparkContext
-  sc._jsc.hadoopConfiguration().set('fs.s3a.impl',
-                                    'org.apache.hadoop.fs.s3a.S3AFileSystem')
-  sc._jsc.hadoopConfiguration().set(
-      "fs.s3a.aws.credentials.provider",
-      "com.amazonaws.auth.profile.ProfileCredentialsProvider")
-  sc._jsc.hadoopConfiguration().set("fs.s3a.endpoint",
-                                    "s3.eu-west-3.amazonaws.com")
-  spark.sparkContext._conf.getAll()
-    \end{minted}
-\end{frame}
-
-\section{Chaine de traitement}
+\section{BigData}
 \subsection{Spark}
 \begin{frame}{\insertsubsection}
   \begin{columns}
@@ -268,6 +170,21 @@ os.environ[
     "Réduction de dimension"  [draw]  // {"PCA (conservation de 100 composantes)"},
     };
   \end{center}
+\end{frame}
+
+\begin{frame}{\insertsubsection}
+  \begin{columns}
+    \begin{column}{.5\textwidth}
+      \begin{itemize}
+        \item SparkContext supervise la répartition des taches
+        \item[]
+        \item Différentes taches sont réparties sur les différents nœuds
+      \end{itemize}
+    \end{column}
+    \begin{column}{.5\textwidth}
+      \includegraphics[width=\textwidth]{./cluster-overview.png}
+    \end{column}
+  \end{columns}
 \end{frame}
 
 \subsection{PySpark}
@@ -448,6 +365,104 @@ pcaDataDF = pcaData.select(['label', 'pca_features']).toPandas()
       \end{minted}
     \end{column}
   \end{columns}
+\end{frame}
+
+\section{Déploiement sur le cloud}
+\begin{frame}{\insertsection}
+  \begin{columns}
+    \begin{column}{.6\textwidth}
+      \begin{itemize}
+        \item Utilisation d'une machine EC2 hébergée par Amazon Web Services
+              \begin{itemize}
+                \item Utilisation de Debian
+                \item[]
+                \item Connexion par SSH
+                \item[]
+                \item Installation de java, git
+              \end{itemize}
+        \item[]
+        \item Utilisation de S3 comme espace de stockage pour la base de données d'images
+      \end{itemize}
+    \end{column}
+    \begin{column}{.4\textwidth}
+      \center
+      \includegraphics[width=.8\textwidth]{./512px-Amazon_Web_Services_Logo.svg.png}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{\insertsection}
+  \begin{columns}
+    \begin{column}{.5\textwidth}
+      \begin{itemize}
+        \item Essais avec t2.micro
+              \begin{itemize}
+                \item 1 CPU
+                \item \SI{1}{\giga\byte} de mémoire RAM
+                \item \SI{10}{\giga\octet} de mémoire disque
+                \item Connexion réseau lente
+              \end{itemize}
+        \item[]
+        \item Utilisation d'un jeu d'entrainement très léger : 2 types de fruits
+        \item[]
+        \item Offre gratuite
+        \item[]
+        \item Coût très faible, mais peu de ressources de calculs
+      \end{itemize}
+    \end{column}
+    \begin{column}{.5\textwidth}
+      \begin{itemize}
+        \item Essais avec t3.2xlarge
+              \begin{itemize}
+                \item 8 CPU
+                \item \SI{32}{\giga\byte} de mémoire RAM
+                \item \SI{10}{\giga\octet} de mémoire disque
+                \item Connexion réseau jusqu'à \SI{5}{\giga\bit}
+              \end{itemize}
+        \item[]
+        \item Sample d'un dixième de la base originale $\simeq$ 60000 image soit environ 6000 images
+        \item[]
+        \item \SI{0.3776}{\$} par heure
+        \item[]
+        \item Coût plus important, mais supporte mieux la charge de calculs
+      \end{itemize}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\subsection{Configuration de l'utilisation des services Amazon}
+\begin{frame}[fragile]{\insertsection}{\insertsubsection}
+  \begin{itemize}
+    \item Téléchargement des packages permettant de communiquer avec le stockage S3
+  \end{itemize}
+  \begin{minted}{python}
+os.environ[
+    'PYSPARK_SUBMIT_ARGS'] = '--packages com.amazonaws:aws-java-sdk:1.12.230, \
+                                org.apache.hadoop:hadoop-aws:3.3.1 pyspark-shell'
+  \end{minted}
+
+  \vfill
+  \hrule
+
+  \begin{itemize}
+    \item Configuration de hadoop pour gérer la connexion au stockage sur S3
+    \begin{itemize}
+      \item Utilisation d'un fichier \emph{credentials} dans le dossier ~/.aws/ afin d'avoir les clés de connexion facilement accessibles
+    \end{itemize}
+  \end{itemize}
+  \begin{minted}{python}
+  spark = SparkSession.builder.master('local').appName(
+      'FruitsPreProc').getOrCreate()
+  sc = spark.sparkContext
+  sc._jsc.hadoopConfiguration().set('fs.s3a.impl',
+                                    'org.apache.hadoop.fs.s3a.S3AFileSystem')
+  sc._jsc.hadoopConfiguration().set(
+      "fs.s3a.aws.credentials.provider",
+      "com.amazonaws.auth.profile.ProfileCredentialsProvider")
+  sc._jsc.hadoopConfiguration().set("fs.s3a.endpoint",
+                                    "s3.eu-west-3.amazonaws.com")
+  spark.sparkContext._conf.getAll()
+    \end{minted}
 \end{frame}
 
 \section{Axes d'amélioration}
